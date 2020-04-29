@@ -130,9 +130,9 @@ def onehot(data, min_length):
 
 
 def nearest_neighbors(word, embeddings, vocab, num_words):
-    vectors = embeddings.cpu().detach().numpy()
+    vectors = embeddings.cpu().numpy()
     index = vocab.index(word)
-    query = embeddings[index].cpu().detach().numpy()
+    query = embeddings[index].cpu().numpy()
     ranks = vectors.dot(query).squeeze()
     denom = query.T.dot(query).squeeze()
     denom = denom * np.sum(vectors ** 2, 1)

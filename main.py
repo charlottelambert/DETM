@@ -9,10 +9,10 @@ import pickle
 import random
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io
 import seaborn as sns
-import matplotlib.pyplot as plt
 import torch
 from sklearn.decomposition import PCA
 from torch import nn, optim
@@ -459,7 +459,7 @@ def visualize():
                 try:
                     gamma = beta[k, t, :]
                     top_words = list(
-                        gamma.cpu().detach().numpy().argsort()[-args.num_words + 1 :][::-1]
+                        gamma.cpu().numpy().argsort()[-args.num_words + 1 :][::-1]
                     )
                     topic_words = [vocab[a] for a in top_words]
                     topics_words.append(" ".join(topic_words))
@@ -663,7 +663,7 @@ def _diversity_helper(beta, num_tops):
     list_w = np.zeros((args.num_topics, num_tops))
     for k in range(args.num_topics):
         gamma = beta[k, :]
-        top_words = gamma.cpu().detach().numpy().argsort()[-num_tops:][::-1]
+        top_words = gamma.cpu().numpy().argsort()[-num_tops:][::-1]
         list_w[k, :] = top_words
     list_w = np.reshape(list_w, (-1))
     list_w = list(list_w)
@@ -697,7 +697,7 @@ def get_topic_quality():
         cnt_all = []
         for tt in range(args.num_times):
             tc, cnt = get_topic_coherence(
-                beta[:, tt, :].cpu().detach().numpy(), train_tokens, vocab
+                beta[:, tt, :].cpu().numpy(), train_tokens, vocab
             )
             TC_all.append(tc)
             cnt_all.append(cnt)
@@ -744,13 +744,13 @@ if args.mode == "train":
     with torch.no_grad():
         print("Saving topic matrix beta...")
         alpha = model.mu_q_alpha
-        beta = model.get_beta(alpha).cpu().detach().numpy()
+        beta = model.get_beta(alpha).cpu().numpy()
         scipy.io.savemat(
             ckpt + "_beta.mat", {"values": beta}, do_compression=True
         )
         if args.train_embeddings:
             print("Saving word embedding matrix rho...")
-            rho = model.rho.weight.cpu().detach().numpy()
+            rho = model.rho.weight.cpu().numpy()
             scipy.io.savemat(
                 ckpt + "_rho.mat", {"values": rho}, do_compression=True
             )
@@ -765,7 +765,7 @@ else:
 
     print("Saving alpha...")
     with torch.no_grad():
-        alpha = model.mu_q_alpha.cpu().detach().numpy()
+        alpha = model.mu_q_alpha.cpu().numpy()
         scipy.io.savemat(
             ckpt + "_alpha.mat", {"values": alpha}, do_compression=True
         )

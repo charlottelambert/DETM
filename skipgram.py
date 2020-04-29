@@ -18,7 +18,9 @@ parser.add_argument('--window_size', type=int, default=4, help='window size to d
 parser.add_argument('--iters', type=int, default=50, help='number of iterationst')
 
 args = parser.parse_args()
-
+if os.path.exists(args.emb_file):
+    print("Embedding file", args.emb_file, "exists. Exiting...")
+    exit(0)
 # Class for a memory-friendly iterator over the dataset
 class MySentences(object):
     def __init__(self, filename):

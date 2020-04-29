@@ -10,7 +10,7 @@ set -e
 
 data_path=${1:-sessionsAndOrdinarys-txt-tok.tsv-centuries}
 echo STARTING: "$(date)"
-if [ "$data_path" != "sessionsAndOrdinarys-txt-tok.tsv-centuries" ]
+if [ "$data_path" != "sessionsAndOrdinarys-txt-tok-bi.tsv-centuries" ]
 then
 echo ++ Training embeddings for Old Bailey.
 CUDA_DEVICES=3 python3 skipgram.py \
@@ -101,7 +101,7 @@ CUDA_DEVICES=3 python3 main.py \
   --mode train \
   --dataset ob \
   --data_path scripts/$data_path/min_df_50_max_df_0.9 \
-  --num_topics 30 \
+  --num_topics 70 \
   --emb_path data/$data_path-embed \
   --epochs 100 \
   --min_df 50 \
@@ -109,7 +109,7 @@ CUDA_DEVICES=3 python3 main.py \
   --rho_size 100 \
   --lr 0.004 \
   --tc 1 \
-  > results/$data_path/min_df_50_max_df_0.9_t_30_epochs_100_lr_0.004.log
+  > results/$data_path/min_df_50_max_df_0.9_t_70_epochs_100_lr_0.004.log
 
 echo ++ Done with training on $data_path: "$(date)"
 

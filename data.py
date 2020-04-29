@@ -137,9 +137,7 @@ def get_rnn_input(tokens, counts, times, num_times, vocab_size, num_docs):
         )
         for t in range(num_times):
             tmp = (times_batch == t).nonzero()
-            docs = data_batch[tmp] #.squeeze().sum(0)
-            docs = docs.squeeze()
-            docs = docs.sum(0)
+            docs = data_batch[tmp].squeeze().sum(0)
             rnn_input[t] += docs
             cnt[t] += len(tmp)
         if idx % 20 == 0:
