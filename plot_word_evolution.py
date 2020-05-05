@@ -93,12 +93,13 @@ def plot_topic_words(args, k, word_list):
         axis.plot(
             comp, label=word_list[i], lw=2, linestyle="--", marker="o", markersize=4
         )
-    axis.legend(frameon=False)
+    axis.legend(frameon=False, fontsize=14)
     axis.set_xticks(np.arange(T))
-    axis.set_xticklabels(timelist)
+    axis.set_xticklabels(timelist, fontsize=14)
     axis.set_title('Topic: ' + str(k), fontsize=20)
     axis.set_xlabel(xlabel, fontsize=16)
     axis.set_ylabel("Word Probability", fontsize=16)
+    fig.tight_layout()
 
     # Save plot to subdirectory in results directory
     sub_dir = os.path.join("word_evolutions", os.path.basename(args.beta_file).split("_beta.mat")[0])
