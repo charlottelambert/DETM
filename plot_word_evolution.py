@@ -1,161 +1,114 @@
-import pickle
+#!/usr/bin/env python3
+import pickle, argparse
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io
 
-import data
+import data, os, re
 
-beta = scipy.io.loadmat("./beta_100.mat")["values"]  # K x T x V
+# ./plot_word_evolution.py --data_dir=scripts/sessionsAndOrdinarys-txt-tok.tsv-decades/min_df_100_max_df_0.8/ --beta_file=results/sessionsAndOrdinarys-txt-tok.tsv-decades/detm_ob_K_30_Htheta_800_Optim_adam_Clip_0.0_ThetaAct_relu_Lr_0.004_Bsz_1000_RhoSize_100_L_3_minDF_100_trainEmbeddings_1_beta.mat
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--beta_file', type=str, default='./beta_100.mat')
+parser.add_argument('--data_dir', type=str, default='un/min_df_100')
+parser.add_argument('--words_per_slice', type=int, default=3)
+parser.add_argument('--print_topics', default=0, type=int, help='whether or not to print out topics')
+args = parser.parse_args()
+
+
+beta = scipy.io.loadmat(args.beta_file)["values"]  # K x T x V
 print("beta: ", beta.shape)
 
-with open("un/min_df_100/timestamps.pkl", "rb") as f:
+with open(os.path.join(args.data_dir, "timestamps.pkl"), "rb") as f:
     timelist = pickle.load(f)
-print("timelist: ", timelist)
+
 T = len(timelist)
 ticks = [str(x) for x in timelist]
-print("ticks: ", ticks)
+# print("ticks: ", ticks)
+print("Number of time slices: ", T)
 
 ## get vocab
-data_file = "un/min_df_100"
-vocab, train, valid, test = data.get_data(data_file, temporal=True)
+vocab, train, valid, test = data.get_data(args.data_dir, temporal=True)
 vocab_size = len(vocab)
 
 ## plot topics
 num_words = 10
-times = [0, 10, 40]
-num_topics = 50
+
+if "decades" in args.data_dir:
+    times = [0, 10, 20]
+    timelist = [int(t)*10 for t in timelist]
+    xlabel = "Decade"
+elif "centuries" in args.data_dir:
+    times = [0, 1, 2]
+    timelist = [1674, 1774, 1874]
+    xlabel = "Century"
+else: times = [0]
+
+# Get num topics from input filename
+try:
+    num_topics = int(re.search("K_[0-9]+", os.path.basename(args.beta_file)).group().split("_")[1])
+except:
+    num_topics = 50
+
+print("Visualizing", num_topics, "topics...")
+
+# {topic_id:[top, words, from, all, time, slices]}
+word_list_dict = {}
+
+# Build up dictionary mapping each topic number to the top n words in each time
+# slice
 for k in range(num_topics):
+    word_list_dict[k] = set()
     for t in times:
         gamma = beta[k, t, :]
         top_words = list(gamma.argsort()[-num_words + 1 :][::-1])
         topic_words = [vocab[a] for a in top_words]
-        print("Topic {} .. Time: {} ===> {}".format(k, t, topic_words))
+        if args.print_topics:
+            print("Topic {} .. Time: {} ===> {}".format(k, t, topic_words))
+        word_list_dict[k].update(set(topic_words[0:args.words_per_slice]))
+    word_list_dict[k] = list(word_list_dict[k])
 
-print("Topic Climate Change...")
-num_words = 10
-for t in range(46):
-    gamma = beta[46, t, :]
-    top_words = list(gamma.argsort()[-num_words + 1 :][::-1])
-    topic_words = [vocab[a] for a in top_words]
-    print("Time: {} ===> {}".format(t, topic_words))
 
-fig, axes = plt.subplots(
-    nrows=2, ncols=4, figsize=(18, 9), dpi=80, facecolor="w", edgecolor="k"
-)
-ax1, ax2, ax3, ax4, ax5, ax6, ax7, ax8 = axes.flatten()
-ticks = [str(x) for x in timelist]
-# plt.xticks(np.arange(T)[0::10], timelist[0::10])
+def plot_topic_words(args, k, word_list):
+    """
+        Plot the evolution of the top n words of each time slice in topic k
+        and save the plot.
 
-words_1 = ["vietnam", "war", "pakistan", "indonesia"]
-tokens_1 = [vocab.index(w) for w in words_1]
-betas_1 = [beta[1, :, x] for x in tokens_1]
-for i, comp in enumerate(betas_1):
-    ax1.plot(
-        range(T),
-        comp,
-        label=words_1[i],
-        lw=2,
-        linestyle="--",
-        marker="o",
-        markersize=4,
+        inputs:
+            args: input arguments
+            k (int): topic id
+            word_list (list): list of words to visualize
+    """
+
+    fig, (axis) = plt.subplots(
+    # change nrows and ncols if more plots
+        nrows=1, ncols=1, figsize=(18, 9), dpi=80, facecolor="w", edgecolor="k"
     )
-ax1.legend(frameon=False)
-print("np.arange(T)[0::10]: ", np.arange(T)[0::10])
-ax1.set_xticks(np.arange(T)[0::10])
-ax1.set_xticklabels(timelist[0::10])
-ax1.set_title('Topic "Southeast Asia"', fontsize=12)
+    ticks = [str(x) for x in timelist]
 
+    tokens = [vocab.index(w) for w in word_list]
+    betas = [beta[k, :, x] for x in tokens]
+    for i, comp in enumerate(betas):
+        axis.plot(
+            comp, label=word_list[i], lw=2, linestyle="--", marker="o", markersize=4
+        )
+    axis.legend(frameon=False)
+    axis.set_xticks(np.arange(T))
+    axis.set_xticklabels(timelist)
+    axis.set_title('Topic: ' + str(k), fontsize=20)
+    axis.set_xlabel(xlabel, fontsize=16)
+    axis.set_ylabel("Word Probability", fontsize=16)
 
-words_5 = ["health", "education", "hunger", "terrorism", "water"]
-tokens_5 = [vocab.index(w) for w in words_5]
-betas_5 = [beta[5, :, x] for x in tokens_5]
-for i, comp in enumerate(betas_5):
-    ax2.plot(
-        comp, label=words_5[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax2.legend(frameon=False)
-ax2.set_xticks(np.arange(T)[0::10])
-ax2.set_xticklabels(timelist[0::10])
-ax2.set_title('Topic "Poverty & Development"', fontsize=12)
+    # Save plot to subdirectory in results directory
+    sub_dir = os.path.join("word_evolutions", os.path.basename(args.beta_file).split("_beta.mat")[0])
+    fig_path = os.path.join(os.path.dirname(args.beta_file), sub_dir, str(k) + "_word_evolution.png")
+    # Make directory if it doesn't exist
+    if not os.path.exists(os.path.dirname(fig_path)): os.makedirs(os.path.dirname(fig_path))
+    plt.savefig(fig_path)
+    plt.close()
+    # plt.show()
+    print("Figure saved to", fig_path)
 
-
-words_11 = ["iran", "iraq", "imperialism"]
-tokens_11 = [vocab.index(w) for w in words_11]
-betas_11 = [beta[11, :, x] for x in tokens_11]
-for i, comp in enumerate(betas_11):
-    ax3.plot(
-        comp, label=words_11[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax3.legend(frameon=False)
-ax3.set_xticks(np.arange(T)[0::10])
-ax3.set_xticklabels(timelist[0::10])
-ax3.set_title('Topic "War"', fontsize=12)
-
-
-words_13 = ["iran", "treaty", "trade", "race", "nonproliferation"]
-tokens_13 = [vocab.index(w) for w in words_13]
-betas_13 = [beta[13, :, x] for x in tokens_13]
-for i, comp in enumerate(betas_13):
-    ax4.plot(
-        comp, label=words_13[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax4.legend(frameon=False)
-ax4.set_xticks(np.arange(T)[0::10])
-ax4.set_xticklabels(timelist[0::10])
-ax4.set_title('Topic "Nuclear Weapons"', fontsize=12)
-
-
-# words_28 = ['men', 'equality', 'gender', 'female', 'education']
-words_28 = ["education", "gender", "equality"]
-tokens_28 = [vocab.index(w) for w in words_28]
-betas_28 = [beta[28, :, x] for x in tokens_28]
-for i, comp in enumerate(betas_28):
-    ax5.plot(
-        comp, label=words_28[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax5.legend(frameon=False)
-ax5.set_xticks(np.arange(T)[0::10])
-ax5.set_xticklabels(timelist[0::10])
-ax5.set_title('Topic "Human Rights"', fontsize=12)
-
-
-words_30 = ["exploitation", "legal", "rules", "negotiations"]
-tokens_30 = [vocab.index(w) for w in words_30]
-betas_30 = [beta[30, :, x] for x in tokens_30]
-for i, comp in enumerate(betas_30):
-    ax6.plot(
-        comp, label=words_30[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax6.legend(frameon=False)
-ax6.set_xticks(np.arange(T)[0::10])
-ax6.set_xticklabels(timelist[0::10])
-ax6.set_title('Topic "Ocean Exploitation"', fontsize=12)
-
-
-words_46 = ["ozone", "warming", "emissions", "waste"]
-tokens_46 = [vocab.index(w) for w in words_46]
-betas_46 = [beta[46, :, x] for x in tokens_46]
-for i, comp in enumerate(betas_46):
-    ax7.plot(
-        comp, label=words_46[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax7.legend(frameon=False)
-ax7.set_xticks(np.arange(T)[0::10])
-ax7.set_xticklabels(timelist[0::10])
-ax7.set_title('Topic "Climate Change"', fontsize=12)
-
-
-words_49 = ["apartheid", "independence", "colonial", "democratic"]
-tokens_49 = [vocab.index(w) for w in words_49]
-betas_49 = [beta[49, :, x] for x in tokens_49]
-for i, comp in enumerate(betas_49):
-    ax8.plot(
-        comp, label=words_49[i], lw=2, linestyle="--", marker="o", markersize=4
-    )
-ax8.legend(frameon=False)
-ax8.set_title('Topic "Africa"', fontsize=12)
-ax8.set_xticks(np.arange(T)[0::10])
-ax8.set_xticklabels(timelist[0::10])
-plt.savefig("word_evolution.png")
-plt.show()
+for k, word_list in word_list_dict.items():
+    plot_topic_words(args, k, word_list)
