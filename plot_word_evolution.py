@@ -88,8 +88,10 @@ def plot_topic_words(args, k, word_list):
     ticks = [str(x) for x in timelist]
 
     tokens = [vocab.index(w) for w in word_list]
+    # betas has one weight (?) per time slice for every token
     betas = [beta[k, :, x] for x in tokens]
     for i, comp in enumerate(betas):
+        # comp is the list of weights for each slice
         axis.plot(
             comp, label=word_list[i], lw=2, linestyle="--", marker="o", markersize=4
         )
