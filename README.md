@@ -1,10 +1,10 @@
 # D-ETM
 
-This repository is a fork of code accompanying the paper titled "The Dynamic Embedded Topic Model" by Adji B. Dieng, Francisco J. R. Ruiz, and David M. Blei. (Arxiv link: https://arxiv.org/abs/1907.05545). The code is adapted to work with the Proceedings of Old Bailey in [this](https://github.com/charlottelambert/thesis) project.
+This repository is a fork of code accompanying the paper titled "The Dynamic Embedded Topic Model" by Adji B. Dieng, Francisco J. R. Ruiz, and David M. Blei. (Arxiv link: https://arxiv.org/abs/1907.05545). The code is adapted to work with the Proceedings of Old Bailey in [this](https://github.com/charlottelambert/old-bailey) project.
 
 ## Steps to run
 
-All the following steps are intended to be run on the TSV data representation of the Proceedings of Old Bailey. Go [here](https://github.com/charlottelambert/thesis/data) to see information about obtaining this data.
+All the following steps are intended to be run on the TSV data representation of the Proceedings of Old Bailey. Go [here](https://github.com/charlottelambert/old-bailey/data) to see information about obtaining this data.
 
 ### Data
 
@@ -33,7 +33,7 @@ To run actually run the model and the embeddings, use [`./run_detm.sh`](run_detm
 ./run_detm.sh TSV_CORPUS
 ```
 
-First, this will run `skipgram.py` to generate word embeddings and save them to a file in `data/TSV_CORPUS-embed`. Use the `dump_w2v.py` code [here](https://github.com/charlottelambert/thesis/vector-space) to generate files you can use to visualize these embeddings using [projector.tensorflow.org](projector.tensorflow.org). Next, this script creates a directory called `./results/TSV_CORPUS` which will contain the output of the model.
+First, this will run `skipgram.py` to generate word embeddings and save them to a file in `data/TSV_CORPUS-embed`. Use the `dump_w2v.py` code [here](https://github.com/charlottelambert/old-bailey/vector-space) to generate files you can use to visualize these embeddings using [projector.tensorflow.org](projector.tensorflow.org). Next, this script creates a directory called `./results/TSV_CORPUS` which will contain the output of the model.
 
 ### Visualize Results
 
